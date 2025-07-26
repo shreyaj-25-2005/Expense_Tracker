@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <div class="logo">LwA</div>
+                <div class="brand-text">
+                    <h1>Expense Tracker</h1>
+                    <div class='code-block code-block-2' style='margin: 8px 0; clear: both;'>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2094722033678002"
+     crossorigin="anonymous"></script>
+<ins class="adsbygoogle"
+     style="display:block; text-align:center;"
+     data-ad-layout="in-article"
+     data-ad-format="fluid"
+     data-ad-client="ca-pub-2094722033678002"
+     data-ad-slot="2248279416"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script></div>
+<p>Project 4: Expense Tracker</p>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn" id="reset-btn">
+                    <i class="fas fa-redo"></i> Reset Data
+                </button>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2><i class="fas fa-chart-line"></i> Financial Summary</h2>
+
+                <div class="balance-summary">
+                    <div class="balance-item">
+                        <h3>Total Balance</h3>
+                        <div class="balance-value" id="balance">$0.00</div>
+                    </div>
+
+                    <div class="balance-item">
+                        <h3>Total Income</h3>
+                        <div class="balance-value" id="income">$0.00</div>
+                    </div>
+
+                    <div class="balance-item">
+                        <h3>Total Expenses</h3>
+                        <div class="balance-value" id="expense">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="chart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-plus-circle"></i> Add Transaction</h2>
+
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="title">Transaction Title</label>
+                        <input type="text" id="title" class="form-control" placeholder="e.g. Groceries, Salary" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">Amount ($)</label>
+                        <input type="number" id="amount" class="form-control" placeholder="e.g. 100" min="0" step="0.01" required>
+                    </div>
+
+                    <div class="radio-group">
+                        <div class="radio-option income-option" data-type="income">
+                            <i class="fas fa-arrow-down"></i>
+                            <div>Income</div>
+                        </div>
+                        <div class="radio-option expense-option" data-type="expense">
+                            <i class="fas fa-arrow-up"></i>
+                            <div>Expense</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" class="form-control" required>
+                            <option value="">Select a category</option>
+                            <option value="salary">Salary</option>
+                            <option value="freelance">Freelance</option>
+                            <option value="investment">Investment</option>
+                            <option value="food">Food & Dining</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="transport">Transportation</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="health">Health & Fitness</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" class="form-control" required>
+                    </div>
+
+                    <button type="submit" class="btn">
+                        <i class="fas fa-plus"></i> Add Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-history"></i> Recent Transactions</h2>
+            <div class="transactions" id="transactions-list">
+                <!-- Transactions will be added here dynamically -->
+            </div>
+        </div>
+
+        <footer>
+            <p>Created by <a href="#">Learn with Arshyan</a> | Expense Tracker Project | Source Code: learnwitharshyan.com/code | &copy; 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const balanceElement = document.getElementById('balance');
+        const incomeElement = document.getElementById('income');
+        const expenseElement = document.getElementById('expense');
+        const transactionsList = document.getElementById('transactions-list');
+        const transactionForm = document.getElementById('transaction-form');
+        const resetBtn = document.getElementById('reset-btn');
+        const chartCanvas = document.getElementById('chart');
+
+        // Initialize transactions array
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+        // Set current date as default
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Initialize chart
+        const chart = new Chart(chartCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Income', 'Expenses'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#2ecc71', '#e74c3c'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `$${context.parsed.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Update balance, income, and expense
+        function updateSummary() {
+            const amounts = transactions.map(transaction =>
+                transaction.type === 'income' ? transaction.amount : -transaction.amount
+            );
+
+            const balance = amounts.reduce((acc, item) => (acc += item), 0);
+            const income = amounts
+                .filter(item => item > 0)
+                .reduce((acc, item) => (acc += item), 0);
+            const expense = amounts
+                .filter(item => item < 0)
+                .reduce((acc, item) => (acc += item), 0) * -1;
+
+            balanceElement.textContent = formatCurrency(balance);
+            incomeElement.textContent = formatCurrency(income);
+            expenseElement.textContent = formatCurrency(expense);
+
+            // Update chart
+            chart.data.datasets[0].data = [income, expense];
+            chart.update();
+        }
+
+        // Add transaction to DOM
+        function addTransactionDOM(transaction) {
+            const sign = transaction.type === 'income' ? '+' : '-';
+            const item = document.createElement('div');
+            item.classList.add('transaction-item', transaction.type);
+
+            const categoryIcons = {
+                salary: 'fa-money-bill',
+                freelance: 'fa-laptop',
+                investment: 'fa-chart-line',
+                food: 'fa-utensils',
+                shopping: 'fa-shopping-bag',
+                transport: 'fa-car',
+                entertainment: 'fa-film',
+                utilities: 'fa-bolt',
+                health: 'fa-heartbeat',
+                other: 'fa-question-circle'
+            };
+
+            item.innerHTML = `
+                <div class="transaction-info">
+                    <div class="transaction-icon">
+                        <i class="fas ${categoryIcons[transaction.category] || 'fa-question-circle'}"></i>
+                    </div>
+                    <div class="transaction-details">
+                        <h3>${transaction.title}</h3>
+                        <p>${transaction.date} • ${transaction.category}</p>
+                    </div>
+                </div>
+                <div class="transaction-amount">
+                    ${sign}${formatCurrency(transaction.amount)}
+                </div>
+                <button class="delete-btn" data-id="${transaction.id}">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            `;
+
+            transactionsList.insertBefore(item, transactionsList.firstChild);
+        }
+
+        // Update transactions list
+        function updateTransactionsList() {
+            // Clear list
+            transactionsList.innerHTML = '';
+
+            // Add transactions
+            transactions.slice().reverse().forEach(addTransactionDOM);
+
+            // Update summary
+            updateSummary();
+        }
+
+        // Generate random ID
+        function generateID() {
+            return Math.floor(Math.random() * 1000000000);
+        }
+
+        // Add new transaction
+        function addTransaction(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const type = document.querySelector('.radio-option.selected').dataset.type;
+            const category = document.getElementById('category').value;
+            const date = document.getElementById('date').value;
+
+            if (!title || !amount || !type || !category || !date) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const transaction = {
+                id: generateID(),
+                title,
+                amount,
+                type,
+                category,
+                date: new Date(date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })
+            };
+
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            // Add to DOM
+            addTransactionDOM(transaction);
+
+            // Update summary
+            updateSummary();
+
+            // Reset form
+            transactionForm.reset();
+            document.getElementById('date').valueAsDate = new Date();
+
+            // Reset radio buttons
+            document.querySelectorAll('.radio-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        // Delete transaction
+        function deleteTransaction(id) {
+            transactions = transactions.filter(transaction => transaction.id !== id);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            updateTransactionsList();
+        }
+
+        // Reset data
+        function resetData() {
+            if (confirm('Are you sure you want to reset all data?')) {
+                transactions = [];
+                localStorage.removeItem('transactions');
+                updateTransactionsList();
+            }
+        }
+
+        // Event listeners
+        transactionForm.addEventListener('submit', addTransaction);
+
+        resetBtn.addEventListener('click', resetData);
+
+        // Radio button selection
+        document.querySelectorAll('.radio-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.radio-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
+
+        // Delete transaction event delegation
+        transactionsList.addEventListener('click', e => {
+            if (e.target.closest('.delete-btn')) {
+                const id = parseInt(e.target.closest('.delete-btn').dataset.id);
+                deleteTransaction(id);
+            }
+        });
+
+        // Initialize the app
+        function init() {
+            updateTransactionsList();
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
